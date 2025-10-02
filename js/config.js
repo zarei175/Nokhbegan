@@ -1,8 +1,8 @@
 // تنظیمات Supabase
 const SUPABASE_CONFIG = {
-    url: 'https://btvksaocmjufgfshyqfb.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJ0dmtzYW9jbWp1Zmdmc2h5cWZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkwODczMDEsImV4cCI6MjA3NDY2MzMwMX0.YdY465d7i8HRn5JV9dc8vZ5CRDTs_Og3DfZwzuxRU1o',
-    projectId: 'btvksaocmjufgfshyqfb'
+    url: 'https://svnckawzrvalodsvctuh.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN2bmNrYXd6cnZhbG9kc3ZjdHVoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTk0MTYzMDAsImV4cCI6MjA3NDk5MjMwMH0.hrWFjO8d8HHBs3zJc1TR8gsgkTWggoKVDph19hDdrNI',
+    projectId: 'svnckawzrvalodsvctuh'
 };
 
 // نام جداول

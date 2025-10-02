@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست اتصال Supabase</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            direction: rtl;
+            text-align: center;
+            padding: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            background: rgba(255,255,255,0.2);
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3) !important;
+        }
+        .error {
+            background: rgba(244, 67, 54, 0.3) !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>تست اتصال به پایگاه داده Supabase</h1>
+        <p>پروژه: svnckawzrvalodsvctuh</p>
+        
+        <button onclick="testConnection()">تست اتصال</button>
+        <button onclick="testStudentsTable()">تست جدول دانش‌آموزان</button>
+        <button onclick="insertTestData()">اضافه کردن داده تست</button>
+        
+        <div id="result"></div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    
+    <script>
+        let supabase;
+        
+        // راه‌اندازی Supabase
+        function initSupabase() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+                return true;
+            } catch (error) {
+                console.error('خطا در راه‌اندازی Supabase:', error);
+                return false;
+            }
+        }
+        
+        // تست اتصال
+        async function testConnection() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'در حال تست اتصال...';
+            
+            if (!initSupabase()) {
+                result.innerHTML = '❌ خطا در راه‌اندازی کلاینت Supabase';
+                result.className = 'error';
+                return;
+            }
+            
+            try {
+                // تست ساده - دریافت اطلاعات پروژه
+                const { data, error } = await supabase.from('students').select('count', { count: 'exact', head: true });
+                
+                if (error && error.code === 'PGRST116') {
+                    result.innerHTML = `⚠️ اتصال برقرار اما جدول 'students' موجود نیست<br>
+                                       کد خطا: ${error.code}<br>
+                                       پیام: ${error.message}`;
+                    result.className = 'error';
+                } else if (error) {
+                    result.innerHTML = `❌ خطا: ${error.message}<br>کد: ${error.code}`;
+                    result.className = 'error';
+                } else {
+                    result.innerHTML = `✅ اتصال موفق!<br>
+                                       URL: ${SUPABASE_CONFIG.url}<br>
+                                       تعداد رکوردها: ${data || 0}`;
+                    result.className = 'success';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ خطای شبکه: ${error.message}`;
+                result.className = 'error';
+            }
+        }
+        
+        // تست جدول دانش‌آموزان
+        async function testStudentsTable() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'در حال تست جدول...';
+            
+            if (!initSupabase()) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('*')
+                    .limit(1);
+                
+                if (error) {
+                    result.innerHTML = `❌ خطا در دسترسی به جدول: ${error.message}`;
+                    result.className = 'error';
+                } else {
+                    result.innerHTML = `✅ جدول students در دسترس است<br>
+                                       نمونه داده: ${data.length} رکورد`;
+                    result.className = 'success';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ خطا: ${error.message}`;
+                result.className = 'error';
+            }
+        }
+        
+        // اضافه کردن داده تست
+        async function insertTestData() {
+            const result = document.getElementById('result');
+            result.innerHTML = 'در حال اضافه کردن داده تست...';
+            
+            if (!initSupabase()) return;
+            
+            const testStudent = {
+                first_name: 'علی',
+                last_name: 'احمدی',
+                father_name: 'محمد',
+                national_id: '1234567890',
+                class_name: '۷۰۱',
+                address: 'تهران، خیابان ولیعصر',
+                medical_conditions: 'ندارد',
+                father_job: 'مهندس',
+                mother_job: 'خانه‌دار',
+                father_phone: '09121234567',
+                mother_phone: '09121234568',
+                student_phone: '09121234569'
+            };
+            
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .insert(testStudent)
+                    .select();
+                
+                if (error) {
+                    result.innerHTML = `❌ خطا در اضافه کردن داده: ${error.message}`;
+                    result.className = 'error';
+                } else {
+                    result.innerHTML = `✅ داده تست با موفقیت اضافه شد<br>
+                                       ID: ${data[0].id}<br>
+                                       نام: ${data[0].first_name} ${data[0].last_name}`;
+                    result.className = 'success';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ خطا: ${error.message}`;
+                result.className = 'error';
+            }
+        }
+        
+        // تست اولیه هنگام بارگذاری صفحه
+        window.onload = function() {
+            console.log('Supabase Config:', SUPABASE_CONFIG);
+        };
+    </script>
+</body>
+</html>

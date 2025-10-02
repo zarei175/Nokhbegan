@@ -38,12 +38,23 @@ function setupEventListeners() {
     document.getElementById('importExpected').addEventListener('click', () => document.getElementById('fileInput').click());
     document.getElementById('fileInput').addEventListener('change', handleFileImport);
     document.getElementById('showRemaining').addEventListener('click', toggleRemainingStudents);
+    
+    // دکمه خروج از پنل مدیریت
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+        if (confirm('آیا مطمئن هستید که می‌خواهید از پنل مدیریت خارج شوید؟')) {
+            authManager.logout();
+            showMessage('با موفقیت از پنل مدیریت خارج شدید', 'success');
+        }
+    });
 
     // اعتبارسنجی فیلدهای شماره تلفن
     setupPhoneValidation();
 
     // اعتبارسنجی کد ملی
     setupNationalIdValidation();
+    
+    // تنظیم رویدادهای احراز هویت
+    authManager.setupAuthEvents();
 }
 
 // تنظیم اعتبارسنجی شماره تلفن
@@ -123,6 +134,12 @@ function isValidNationalId(nationalId) {
 
 // تعویض بخش‌ها
 function switchSection(section) {
+    // بررسی احراز هویت برای پنل مدیریت
+    if (section === 'dashboard' && !authManager.requireAuth()) {
+        authManager.showLoginModal();
+        return;
+    }
+
     // حذف کلاس active از همه دکمه‌ها
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.classList.remove('active');
