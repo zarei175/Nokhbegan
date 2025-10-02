@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ثبت نام دانش آموزان - مدرسه هیات امنایی نخبگان</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazir:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- هدر -->
+        <header class="header">
+            <div class="logo-container">
+                <img src="https://raw.githubusercontent.com/zarei176/students_data/main/photo21102117588.jpg" alt="لوگوی مدرسه هیات امنایی نخبگان" class="school-logo">
+            </div>
+            <div class="header-text">
+                <h1>مدرسه هیات امنایی نخبگان</h1>
+                <p class="school-motto">با دانش و ایمان، فاتح میدان باش ...</p>
+                <p class="academic-year">سال تحصیلی ۱۴۰۵-۱۴۰۴</p>
+            </div>
+        </header>
+
+        <!-- منوی ناوبری -->
+        <nav class="navigation">
+            <div class="nav-buttons">
+                <button class="nav-btn active" id="registrationBtn">ثبت نام دانش آموز</button>
+                <button class="nav-btn" id="dashboardBtn">پنل مدیریت</button>
+            </div>
+        </nav>
+
+        <!-- فرم ثبت نام دانش آموز -->
+        <section id="registrationSection" class="form-section">
+            <div class="form-container">
+                <h2>فرم ثبت نام دانش آموز</h2>
+                <form id="studentForm">
+                    <div class="form-grid">
+                        <!-- اطلاعات دانش آموز -->
+                        <div class="form-group">
+                            <label for="firstName">نام:</label>
+                            <input type="text" id="firstName" name="firstName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="lastName">نام خانوادگی:</label>
+                            <input type="text" id="lastName" name="lastName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fatherName">نام پدر:</label>
+                            <input type="text" id="fatherName" name="fatherName" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="nationalId">کد ملی:</label>
+                            <input type="text" id="nationalId" name="nationalId" pattern="[0-9]{10}" maxlength="10" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="className">کلاس:</label>
+                            <select id="className" name="className" required>
+                                <option value="">انتخاب کلاس</option>
+                                <option value="۷۰۱">۷۰۱</option>
+                                <option value="۷۰۲">۷۰۲</option>
+                                <option value="۷۰۳">۷۰۳</option>
+                                <option value="۸۰۱">۸۰۱</option>
+                                <option value="۸۰۲">۸۰۲</option>
+                                <option value="۸۰۳">۸۰۳</option>
+                                <option value="۸۰۴">۸۰۴</option>
+                                <option value="۸۰۵">۸۰۵</option>
+                                <option value="۸۰۶">۸۰۶</option>
+                                <option value="۸۰۷">۸۰۷</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="address">آدرس منزل:</label>
+                            <textarea id="address" name="address" rows="3" required></textarea>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="medicalConditions">بیماری خاص:</label>
+                            <textarea id="medicalConditions" name="medicalConditions" rows="2" placeholder="در صورت عدم وجود بیماری خاص، خالی بگذارید"></textarea>
+                        </div>
+
+                        <!-- اطلاعات پدر -->
+                        <div class="section-title">اطلاعات پدر</div>
+                        
+                        <div class="form-group">
+                            <label for="fatherJob">شغل پدر:</label>
+                            <input type="text" id="fatherJob" name="fatherJob" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="fatherPhone">شماره همراه پدر:</label>
+                            <input type="tel" id="fatherPhone" name="fatherPhone" pattern="09[0-9]{9}" maxlength="11" required>
+                        </div>
+
+                        <!-- اطلاعات مادر -->
+                        <div class="section-title">اطلاعات مادر</div>
+                        
+                        <div class="form-group">
+                            <label for="motherJob">شغل مادر:</label>
+                            <input type="text" id="motherJob" name="motherJob" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="motherPhone">شماره همراه مادر:</label>
+                            <input type="tel" id="motherPhone" name="motherPhone" pattern="09[0-9]{9}" maxlength="11" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="studentPhone">شماره همراه دانش آموز:</label>
+                            <input type="tel" id="studentPhone" name="studentPhone" pattern="09[0-9]{9}" maxlength="11">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="submit-btn">ثبت اطلاعات</button>
+                        <button type="reset" class="reset-btn">پاک کردن فرم</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- پنل مدیریت -->
+        <section id="dashboardSection" class="dashboard-section" style="display: none;">
+            <div class="dashboard-container">
+                <h2>پنل مدیریت دانش آموزان</h2>
+                
+                <!-- آمار کلی -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <h3>کل دانش آموزان ثبت شده</h3>
+                        <span class="stat-number" id="totalStudents">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>دانش آموزان مورد انتظار</h3>
+                        <span class="stat-number" id="expectedStudents">0</span>
+                    </div>
+                    <div class="stat-card">
+                        <h3>باقی مانده برای ثبت نام</h3>
+                        <span class="stat-number" id="remainingStudents">0</span>
+                    </div>
+                </div>
+
+                <!-- دکمه‌های عملیات -->
+                <div class="action-buttons">
+                    <button class="action-btn export-btn" id="exportExcel">
+                        <span>📊</span>
+                        خروجی اکسل دانش آموزان ثبت شده
+                    </button>
+                    <button class="action-btn import-btn" id="importExpected">
+                        <span>📁</span>
+                        آپلود لیست دانش آموزان مورد انتظار
+                    </button>
+                    <input type="file" id="fileInput" accept=".xlsx,.xls" style="display: none;">
+                    <button class="action-btn show-remaining-btn" id="showRemaining">
+                        <span>📋</span>
+                        نمایش دانش آموزان بدون ثبت نام
+                    </button>
+                </div>
+
+                <!-- فیلتر و جستجو -->
+                <div class="filter-section">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="جستجو در نام، نام خانوادگی، کد ملی ...">
+                        <select id="classFilter">
+                            <option value="">همه کلاس ها</option>
+                            <option value="۷۰۱">۷۰۱</option>
+                            <option value="۷۰۲">۷۰۲</option>
+                            <option value="۷۰۳">۷۰۳</option>
+                            <option value="۸۰۱">۸۰۱</option>
+                            <option value="۸۰۲">۸۰۲</option>
+                            <option value="۸۰۳">۸۰۳</option>
+                            <option value="۸۰۴">۸۰۴</option>
+                            <option value="۸۰۵">۸۰۵</option>
+                            <option value="۸۰۶">۸۰۶</option>
+                            <option value="۸۰۷">۸۰۷</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- جدول دانش آموزان -->
+                <div class="table-container">
+                    <table class="students-table" id="studentsTable">
+                        <thead>
+                            <tr>
+                                <th>ردیف</th>
+                                <th>نام و نام خانوادگی</th>
+                                <th>کلاس</th>
+                                <th>کد ملی</th>
+                                <th>نام پدر</th>
+                                <th>شماره پدر</th>
+                                <th>تاریخ ثبت</th>
+                                <th>عملیات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="studentsTableBody">
+                            <!-- دیتا از طریق JavaScript پر خواهد شد -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- بخش نمایش دانش آموزان بدون ثبت نام -->
+                <div id="remainingStudentsSection" class="remaining-students-section" style="display: none;">
+                    <h3>دانش آموزان بدون ثبت نام</h3>
+                    <div class="remaining-students-list" id="remainingStudentsList">
+                        <!-- لیست دانش آموزان بدون ثبت نام -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Loading spinner -->
+    <div id="loadingSpinner" class="loading-spinner" style="display: none;">
+        <div class="spinner"></div>
+        <p>در حال پردازش...</p>
+    </div>
+
+    <!-- Success/Error messages -->
+    <div id="messageContainer" class="message-container"></div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/excel.js"></script>
+</body>
+</html>
