@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست ثبت اطلاعات دانش آموز</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazir:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            margin: 20px;
+            background: #f8f9fa;
+        }
+        .debug-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .debug-title {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .debug-info {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status-ok { color: #28a745; }
+        .status-error { color: #dc3545; }
+        .status-warning { color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="debug-container">
+        <h1>🔧 تست ثبت اطلاعات دانش آموز</h1>
+        
+        <div class="debug-section">
+            <h3 class="debug-title">1. بررسی اتصال به Supabase</h3>
+            <div id="supabase-status" class="debug-info">در حال بررسی...</div>
+            <button onclick="testSupabaseConnection()">تست اتصال</button>
+        </div>
+
+        <div class="debug-section">
+            <h3 class="debug-title">2. بررسی جداول پایگاه داده</h3>
+            <div id="tables-status" class="debug-info">در حال بررسی...</div>
+            <button onclick="checkTables()">بررسی جداول</button>
+        </div>
+
+        <div class="debug-section">
+            <h3 class="debug-title">3. تست ثبت دانش آموز</h3>
+            <div id="registration-test" class="debug-info">آماده برای تست...</div>
+            <button onclick="testStudentRegistration()">تست ثبت نام</button>
+        </div>
+
+        <div class="debug-section">
+            <h3 class="debug-title">4. لاگ‌های سیستم</h3>
+            <div id="system-logs" class="debug-info">لاگ‌ها اینجا نمایش داده می‌شوند...</div>
+            <button onclick="clearLogs()">پاک کردن لاگ‌ها</button>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script src="js/supabase.js"></script>
+    
+    <script>
+        let logs = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString('fa-IR');
+            logs.push(`[${timestamp}] ${message}`);
+            updateLogsDisplay();
+        }
+        
+        function updateLogsDisplay() {
+            const logsDiv = document.getElementById('system-logs');
+            logsDiv.innerHTML = logs.slice(-10).join('<br>');
+        }
+        
+        function clearLogs() {
+            logs = [];
+            updateLogsDisplay();
+        }
+        
+        async function testSupabaseConnection() {
+            const statusDiv = document.getElementById('supabase-status');
+            statusDiv.innerHTML = 'در حال تست اتصال...';
+            
+            try {
+                addLog('شروع تست اتصال به Supabase');
+                
+                if (!supabase) {
+                    throw new Error('Supabase client not initialized');
+                }
+                
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('count')
+                    .limit(1);
+                
+                if (error) {
+                    throw error;
+                }
+                
+                statusDiv.innerHTML = '<span class="status-ok">✓ اتصال به Supabase موفق</span>';
+                addLog('اتصال به Supabase موفق');
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status-error">✗ خطا در اتصال: ${error.message}</span>`;
+                addLog(`خطا در اتصال: ${error.message}`, 'error');
+            }
+        }
+        
+        async function checkTables() {
+            const statusDiv = document.getElementById('tables-status');
+            statusDiv.innerHTML = 'در حال بررسی جداول...';
+            
+            try {
+                addLog('شروع بررسی جداول');
+                
+                // بررسی جدول students
+                const { data: studentsData, error: studentsError } = await supabase
+                    .from('students')
+                    .select('count')
+                    .limit(1);
+                
+                if (studentsError) {
+                    addLog(`خطا در جدول students: ${studentsError.message}`, 'error');
+                } else {
+                    addLog('جدول students موجود است');
+                }
+                
+                // بررسی جدول expected_students
+                const { data: expectedData, error: expectedError } = await supabase
+                    .from('expected_students')
+                    .select('count')
+                    .limit(1);
+                
+                if (expectedError) {
+                    addLog(`خطا در جدول expected_students: ${expectedError.message}`, 'error');
+                } else {
+                    addLog('جدول expected_students موجود است');
+                }
+                
+                // بررسی جدول allowed_national_ids
+                const { data: allowedData, error: allowedError } = await supabase
+                    .from('allowed_national_ids')
+                    .select('count')
+                    .limit(1);
+                
+                if (allowedError) {
+                    addLog(`خطا در جدول allowed_national_ids: ${allowedError.message}`, 'error');
+                } else {
+                    addLog('جدول allowed_national_ids موجود است');
+                }
+                
+                statusDiv.innerHTML = '<span class="status-ok">✓ بررسی جداول کامل شد</span>';
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status-error">✗ خطا در بررسی جداول: ${error.message}</span>`;
+                addLog(`خطا در بررسی جداول: ${error.message}`, 'error');
+            }
+        }
+        
+        async function testStudentRegistration() {
+            const statusDiv = document.getElementById('registration-test');
+            statusDiv.innerHTML = 'در حال تست ثبت نام...';
+            
+            try {
+                addLog('شروع تست ثبت نام دانش آموز');
+                
+                const testData = {
+                    firstName: 'تست',
+                    lastName: 'تست',
+                    fatherName: 'تست',
+                    nationalId: '1234567890',
+                    className: '۷۰۱',
+                    address: 'آدرس تست',
+                    medicalConditions: '',
+                    fatherJob: 'تست',
+                    motherJob: 'تست',
+                    fatherPhone: '09123456789',
+                    motherPhone: '09123456788',
+                    studentPhone: '09123456787'
+                };
+                
+                addLog('داده‌های تست آماده شد');
+                
+                // تست اعتبارسنجی
+                if (typeof validateStudentData === 'function') {
+                    const validation = validateStudentData(testData);
+                    if (!validation.isValid) {
+                        throw new Error(`اعتبارسنجی ناموفق: ${validation.error}`);
+                    }
+                    addLog('اعتبارسنجی موفق');
+                }
+                
+                // تست ثبت در پایگاه داده
+                const result = await db.registerStudent(testData);
+                addLog('ثبت نام موفق');
+                
+                statusDiv.innerHTML = '<span class="status-ok">✓ تست ثبت نام موفق</span>';
+                
+            } catch (error) {
+                statusDiv.innerHTML = `<span class="status-error">✗ خطا در تست: ${error.message}</span>`;
+                addLog(`خطا در تست ثبت نام: ${error.message}`, 'error');
+            }
+        }
+        
+        // شروع خودکار تست‌ها
+        window.addEventListener('load', () => {
+            addLog('صفحه تست بارگذاری شد');
+            setTimeout(() => {
+                testSupabaseConnection();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

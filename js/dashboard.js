@@ -236,6 +236,8 @@ class DashboardManager {
     // نمایش جزئیات دانش آموز
     async viewStudentDetails(studentId) {
         try {
+            console.log('📋 نمایش جزئیات دانش آموز:', studentId);
+            
             const student = this.currentStudents.find(s => s.id === studentId);
             if (!student) {
                 showMessage('دانش آموز یافت نشد', 'error');
@@ -251,8 +253,11 @@ class DashboardManager {
                 modal.classList.add('show');
             }, 10);
 
+            console.log('✅ جزئیات دانش آموز نمایش داده شد');
+
         } catch (error) {
-            console.error('Error viewing student details:', error);
+            console.error('❌ خطا در نمایش جزئیات:', error);
+            errorHandler.logError(error, { operation: 'viewStudentDetails', studentId });
             showMessage(MESSAGES.ERROR.GENERAL, 'error');
         }
     }
