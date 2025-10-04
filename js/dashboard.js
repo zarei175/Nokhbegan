@@ -267,11 +267,11 @@ class DashboardManager {
         const modal = document.createElement('div');
         modal.className = 'student-details-modal';
         modal.innerHTML = `
-            <div class="modal-overlay" onclick="this.parentElement.remove()"></div>
+            <div class="modal-overlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
                     <h3>جزئیات دانش آموز</h3>
-                    <button class="modal-close" onclick="this.closest('.student-details-modal').remove()">×</button>
+                    <button class="modal-close">×</button>
                 </div>
                 <div class="modal-body">
                     <div class="student-info-grid">
@@ -328,6 +328,31 @@ class DashboardManager {
             </div>
         `;
 
+        // اضافه کردن event listeners
+        const overlay = modal.querySelector('.modal-overlay');
+        const closeBtn = modal.querySelector('.modal-close');
+        
+        const closeModal = () => {
+            modal.classList.remove('show');
+            setTimeout(() => {
+                if (modal.parentElement) {
+                    modal.remove();
+                }
+            }, 300);
+        };
+        
+        overlay.addEventListener('click', closeModal);
+        closeBtn.addEventListener('click', closeModal);
+        
+        // بستن با کلید ESC
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+
         // اضافه کردن استایل مودال
         this.addModalStyles();
 
@@ -349,69 +374,85 @@ class DashboardManager {
                     z-index: 10000;
                     opacity: 0;
                     transition: opacity 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
                 .student-details-modal.show {
                     opacity: 1;
                 }
                 .modal-overlay {
-                    position: absolute;
+                    position: fixed;
                     top: 0;
                     left: 0;
                     width: 100%;
                     height: 100%;
-                    background: rgba(0, 0, 0, 0.5);
+                    background: rgba(0, 0, 0, 0.6);
+                    backdrop-filter: blur(4px);
                 }
                 .modal-content {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
+                    position: relative;
                     background: white;
-                    border-radius: 12px;
-                    max-width: 600px;
+                    border-radius: 15px;
+                    max-width: 650px;
                     width: 90%;
-                    max-height: 80vh;
+                    max-height: 85vh;
                     overflow-y: auto;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.4);
+                    z-index: 1;
+                    transform: scale(0.9);
+                    transition: transform 0.3s ease;
+                }
+                .student-details-modal.show .modal-content {
+                    transform: scale(1);
                 }
                 .modal-header {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    padding: 20px;
-                    border-bottom: 1px solid #e9ecef;
+                    padding: 25px;
+                    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
                     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                     color: white;
-                    border-radius: 12px 12px 0 0;
+                    border-radius: 15px 15px 0 0;
+                }
+                .modal-header h3 {
+                    margin: 0;
+                    font-size: 1.3rem;
+                    font-weight: 600;
                 }
                 .modal-close {
-                    background: none;
+                    background: rgba(255, 255, 255, 0.15);
                     border: none;
                     color: white;
-                    font-size: 24px;
+                    font-size: 28px;
                     cursor: pointer;
-                    width: 30px;
-                    height: 30px;
+                    width: 36px;
+                    height: 36px;
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     border-radius: 50%;
-                    transition: background-color 0.2s ease;
+                    transition: all 0.2s ease;
+                    line-height: 1;
                 }
                 .modal-close:hover {
-                    background-color: rgba(255, 255, 255, 0.2);
+                    background-color: rgba(255, 255, 255, 0.3);
+                    transform: rotate(90deg);
                 }
                 .modal-body {
-                    padding: 20px;
+                    padding: 25px;
+                    background: #f8f9fa;
                 }
                 .student-info-grid {
                     display: grid;
                     grid-template-columns: 1fr 1fr;
-                    gap: 15px;
+                    gap: 18px;
                 }
                 .info-item {
                     display: flex;
                     flex-direction: column;
+                    gap: 8px;
                 }
                 .info-item.full-width {
                     grid-column: 1 / -1;
@@ -419,21 +460,59 @@ class DashboardManager {
                 .info-item label {
                     font-weight: 600;
                     color: #495057;
-                    margin-bottom: 5px;
-                    font-size: 0.9rem;
+                    font-size: 0.85rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 5px;
+                }
+                .info-item label::before {
+                    content: '▪';
+                    color: #667eea;
+                    font-size: 1.2rem;
                 }
                 .info-item span {
-                    padding: 8px 12px;
-                    background: #f8f9fa;
-                    border-radius: 6px;
-                    border: 1px solid #e9ecef;
+                    padding: 12px 15px;
+                    background: white;
+                    border-radius: 8px;
+                    border: 1px solid #dee2e6;
+                    color: #2c3e50;
+                    font-weight: 500;
+                    transition: all 0.2s ease;
                 }
+                .info-item span:hover {
+                    border-color: #667eea;
+                    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+                }
+                
+                /* Scrollbar styling */
+                .modal-content::-webkit-scrollbar {
+                    width: 8px;
+                }
+                .modal-content::-webkit-scrollbar-track {
+                    background: #f1f1f1;
+                    border-radius: 0 15px 15px 0;
+                }
+                .modal-content::-webkit-scrollbar-thumb {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    border-radius: 10px;
+                }
+                .modal-content::-webkit-scrollbar-thumb:hover {
+                    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+                }
+                
                 @media (max-width: 768px) {
                     .student-info-grid {
                         grid-template-columns: 1fr;
                     }
                     .modal-content {
                         width: 95%;
+                        max-height: 90vh;
+                    }
+                    .modal-header {
+                        padding: 20px;
+                    }
+                    .modal-body {
+                        padding: 20px;
                     }
                 }
             `;
