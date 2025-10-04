@@ -8,7 +8,8 @@ const SUPABASE_CONFIG = {
 // نام جداول
 const TABLES = {
     STUDENTS: 'students',
-    EXPECTED_STUDENTS: 'expected_students'
+    EXPECTED_STUDENTS: 'expected_students',
+    ALLOWED_NATIONAL_IDS: 'allowed_national_ids'
 };
 
 // کلاس‌های مدرسه
@@ -29,6 +30,8 @@ const MESSAGES = {
         GENERAL: 'خطایی رخ داده است. لطفاً دوباره تلاش کنید.',
         NETWORK: 'خطا در اتصال به شبکه. لطفاً اتصال اینترنت خود را بررسی کنید.',
         DUPLICATE_NATIONAL_ID: 'این کد ملی قبلاً ثبت شده است!',
+        NATIONAL_ID_NOT_ALLOWED: 'کد ملی شما در لیست دانش آموزان مجاز وجود ندارد. لطفاً با مدیریت مدرسه تماس بگیرید.',
+        NATIONAL_ID_ALREADY_USED: 'این کد ملی قبلاً استفاده شده است!',
         INVALID_FILE: 'فایل انتخاب شده معتبر نیست!',
         FILE_READ_ERROR: 'خطا در خواندن فایل!'
     },

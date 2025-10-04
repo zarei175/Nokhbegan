@@ -39,6 +39,11 @@ function setupEventListeners() {
     document.getElementById('fileInput').addEventListener('change', handleFileImport);
     document.getElementById('showRemaining').addEventListener('click', toggleRemainingStudents);
     
+    // دکمه‌های مدیریت کدهای ملی
+    document.getElementById('importNationalIds').addEventListener('click', () => document.getElementById('nationalIdsFileInput').click());
+    document.getElementById('nationalIdsFileInput').addEventListener('change', handleNationalIdsImport);
+    document.getElementById('exportNationalIds').addEventListener('click', exportAllowedNationalIds);
+    
     // دکمه خروج از پنل مدیریت
     document.getElementById('logoutBtn').addEventListener('click', () => {
         if (confirm('آیا مطمئن هستید که می‌خواهید از پنل مدیریت خارج شوید؟')) {
@@ -251,6 +256,7 @@ async function updateStatistics() {
 
         document.getElementById('totalStudents').textContent = stats.registered;
         document.getElementById('expectedStudents').textContent = stats.expected;
+        document.getElementById('allowedStudents').textContent = stats.allowed;
         document.getElementById('remainingStudents').textContent = Math.max(0, stats.remaining);
 
     } catch (error) {

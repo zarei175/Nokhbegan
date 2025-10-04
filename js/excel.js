@@ -311,6 +311,202 @@ class ExcelManager {
         }
     }
 
+    // آپلود فایل اکسل کدهای ملی مجاز
+    async importAllowedNationalIds(file) {
+        try {
+            showLoading(true);
+
+            if (!file) {
+                showMessage(MESSAGES.ERROR.INVALID_FILE, 'error');
+                return;
+            }
+
+            // خواندن فایل اکسل
+            const workbook = await this.readExcelFile(file);
+            
+            if (!workbook) {
+                showMessage(MESSAGES.ERROR.FILE_READ_ERROR, 'error');
+                return;
+            }
+
+            // دریافت نام شیت اول
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+
+            // تبدیل داده‌ها به JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+
+            if (jsonData.length === 0) {
+                showMessage('فایل خالی است یا فرمت آن صحیح نمی‌باشد!', 'error');
+                return;
+            }
+
+            // اعتبارسنجی و تمیز کردن داده‌ها
+            const cleanedData = this.validateAndCleanNationalIdsData(jsonData);
+
+            if (cleanedData.length === 0) {
+                showMessage('هیچ کد ملی معتبری در فایل یافت نشد!', 'error');
+                return;
+            }
+
+            // آپلود داده‌ها به پایگاه داده
+            await db.uploadAllowedNationalIds(cleanedData);
+
+            showMessage(`${cleanedData.length} کد ملی مجاز با موفقیت آپلود شد!`, 'success');
+
+            // به‌روزرسانی آمار
+            if (typeof updateStatistics === 'function') {
+                await updateStatistics();
+            }
+
+        } catch (error) {
+            console.error('Error importing allowed national IDs:', error);
+            showMessage(MESSAGES.ERROR.GENERAL, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // اعتبارسنجی و تمیز کردن داده‌های کدهای ملی
+    validateAndCleanNationalIdsData(jsonData) {
+        const cleanedData = [];
+        const seenNationalIds = new Set();
+        
+        jsonData.forEach((row, index) => {
+            // تلاش برای یافتن کد ملی
+            const nationalId = this.findValueInRow(row, ['کد ملی', 'کد_ملی', 'national_id', 'nationalId', 'id']);
+            const studentName = this.findValueInRow(row, ['نام دانش آموز', 'نام', 'name', 'student_name', 'studentName']);
+            const className = this.findValueInRow(row, ['کلاس', 'class', 'class_name', 'className']);
+
+            if (nationalId) {
+                const cleanNationalId = nationalId.toString().trim();
+                
+                // بررسی اعتبار کد ملی
+                if (this.isValidNationalId(cleanNationalId) && !seenNationalIds.has(cleanNationalId)) {
+                    seenNationalIds.add(cleanNationalId);
+                    
+                    const cleanedRow = {
+                        national_id: cleanNationalId,
+                        student_name: studentName ? studentName.toString().trim() : null,
+                        class_name: className ? className.toString().trim() : null,
+                        is_used: false
+                    };
+
+                    // بررسی اینکه نام کلاس در لیست مجاز باشد
+                    if (cleanedRow.class_name && !SCHOOL_CLASSES.includes(cleanedRow.class_name)) {
+                        cleanedRow.class_name = null;
+                    }
+
+                    cleanedData.push(cleanedRow);
+                } else {
+                    console.warn(`Row ${index + 1}: Invalid or duplicate national ID: ${cleanNationalId}`);
+                }
+            } else {
+                console.warn(`Row ${index + 1}: Missing national ID`);
+            }
+        });
+
+        return cleanedData;
+    }
+
+    // اعتبارسنجی کد ملی
+    isValidNationalId(nationalId) {
+        if (!/^[0-9]{10}$/.test(nationalId)) {
+            return false;
+        }
+
+        const check = parseInt(nationalId[9]);
+        let sum = 0;
+        
+        for (let i = 0; i < 9; i++) {
+            sum += parseInt(nationalId[i]) * (10 - i);
+        }
+        
+        const remainder = sum % 11;
+        
+        if (remainder < 2) {
+            return check === remainder;
+        } else {
+            return check === 11 - remainder;
+        }
+    }
+
+    // خروجی اکسل کدهای ملی مجاز
+    async exportAllowedNationalIds() {
+        try {
+            showLoading(true);
+
+            const allowedIds = await db.getAllowedNationalIds();
+
+            if (allowedIds.length === 0) {
+                showMessage('هیچ کد ملی مجازی یافت نشد!', 'info');
+                return;
+            }
+
+            // تبدیل داده‌ها برای اکسل
+            const excelData = allowedIds.map((item, index) => ({
+                'ردیف': index + 1,
+                'کد ملی': item.national_id,
+                'نام دانش آموز': item.student_name || 'مشخص نشده',
+                'کلاس': item.class_name || 'مشخص نشده',
+                'وضعیت': item.is_used ? 'استفاده شده' : 'استفاده نشده',
+                'تاریخ استفاده': item.used_at ? this.formatDateForExcel(item.used_at) : '-'
+            }));
+
+            // ایجاد فایل اکسل
+            const workbook = XLSX.utils.book_new();
+            const worksheet = XLSX.utils.json_to_sheet(excelData);
+
+            // تنظیم عرض ستون‌ها
+            worksheet['!cols'] = [
+                { wch: 5 },   // ردیف
+                { wch: 12 },  // کد ملی
+                { wch: 20 },  // نام دانش آموز
+                { wch: 8 },   // کلاس
+                { wch: 15 },  // وضعیت
+                { wch: 15 }   // تاریخ استفاده
+            ];
+
+            XLSX.utils.book_append_sheet(workbook, worksheet, 'کدهای ملی مجاز');
+
+            // تولید نام فایل
+            const fileName = this.generateFileName('allowed_national_ids');
+
+            // دانلود فایل
+            XLSX.writeFile(workbook, fileName);
+
+            showMessage(`لیست ${allowedIds.length} کد ملی مجاز دانلود شد!`, 'success');
+
+        } catch (error) {
+            console.error('Error exporting allowed national IDs:', error);
+            showMessage(MESSAGES.ERROR.GENERAL, 'error');
+        } finally {
+            showLoading(false);
+        }
+    }
+
+    // ایجاد فایل نمونه برای کدهای ملی
+    createNationalIdsSampleFile() {
+        const sampleData = [
+            { 'کد ملی': '0123456789', 'نام دانش آموز': 'علی احمدی', 'کلاس': '۸۰۱' },
+            { 'کد ملی': '9876543210', 'نام دانش آموز': 'فاطمه محمدی', 'کلاس': '۸۰۲' },
+            { 'کد ملی': '1234567890', 'نام دانش آموز': 'محمد رضایی', 'کلاس': '۷۰۱' }
+        ];
+
+        const workbook = XLSX.utils.book_new();
+        const worksheet = XLSX.utils.json_to_sheet(sampleData);
+        
+        // تنظیم عرض ستون‌ها
+        worksheet['!cols'] = [{ wch: 12 }, { wch: 15 }, { wch: 10 }];
+        
+        XLSX.utils.book_append_sheet(workbook, worksheet, 'نمونه');
+
+        // دانلود فایل نمونه
+        XLSX.writeFile(workbook, 'sample_national_ids.xlsx');
+        
+        showMessage('فایل نمونه کدهای ملی دانلود شد!', 'success');
+    }
+
     // تولید نام فایل با تاریخ
     generateFileName(prefix) {
         const now = new Date();
@@ -370,6 +566,26 @@ async function handleFileImport(event) {
 // تابع دانلود فایل نمونه
 function downloadSampleFile() {
     excelManager.createSampleFile();
+}
+
+// تابع آپلود کدهای ملی مجاز
+async function handleNationalIdsImport(event) {
+    const file = event.target.files[0];
+    if (file) {
+        await excelManager.importAllowedNationalIds(file);
+        // پاک کردن مقدار input برای امکان آپلود مجدد همان فایل
+        event.target.value = '';
+    }
+}
+
+// تابع خروجی کدهای ملی مجاز
+async function exportAllowedNationalIds() {
+    await excelManager.exportAllowedNationalIds();
+}
+
+// تابع دانلود فایل نمونه کدهای ملی
+function downloadNationalIdsSampleFile() {
+    excelManager.createNationalIdsSampleFile();
 }
 
 // رویداد آپلود فایل

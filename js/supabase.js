@@ -75,6 +75,16 @@ class DatabaseManager {
                 throw new Error(MESSAGES.ERROR.DUPLICATE_NATIONAL_ID);
             }
 
+            // بررسی مجاز بودن کد ملی
+            const allowedNationalId = await this.checkNationalIdAllowed(studentData.nationalId);
+            if (!allowedNationalId) {
+                throw new Error(MESSAGES.ERROR.NATIONAL_ID_NOT_ALLOWED);
+            }
+
+            if (allowedNationalId.is_used) {
+                throw new Error(MESSAGES.ERROR.NATIONAL_ID_ALREADY_USED);
+            }
+
             // تبدیل داده‌ها به فرمت پایگاه داده
             const dbData = {
                 first_name: studentData.firstName,
@@ -102,6 +112,9 @@ class DatabaseManager {
 
             // به‌روزرسانی وضعیت ثبت نام در جدول دانش آموزان مورد انتظار
             await this.updateExpectedStudentStatus(studentData.firstName, studentData.lastName);
+
+            // به‌روزرسانی وضعیت کد ملی به استفاده شده
+            await this.markNationalIdAsUsed(studentData.nationalId);
 
             return data[0];
         } catch (error) {
@@ -261,18 +274,112 @@ class DatabaseManager {
                 throw expectedError;
             }
 
+            // تعداد کدهای ملی مجاز
+            const { count: allowedCount, error: allowedError } = await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .select('*', { count: 'exact', head: true });
+
+            if (allowedError) {
+                console.warn('Error fetching allowed national IDs count:', allowedError);
+            }
+
             return {
                 registered: registeredCount || 0,
                 expected: expectedCount || 0,
-                remaining: (expectedCount || 0) - (registeredCount || 0)
+                allowed: allowedCount || 0,
+                remaining: Math.max(0, (allowedCount || expectedCount || 0) - (registeredCount || 0))
             };
         } catch (error) {
             console.error('Error fetching statistics:', error);
             return {
                 registered: 0,
                 expected: 0,
+                allowed: 0,
                 remaining: 0
             };
+        }
+    }
+
+    // بررسی مجاز بودن کد ملی
+    async checkNationalIdAllowed(nationalId) {
+        try {
+            const { data, error } = await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .select('*')
+                .eq('national_id', nationalId)
+                .single();
+
+            if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+                throw error;
+            }
+
+            return data;
+        } catch (error) {
+            console.error('Error checking national ID:', error);
+            return null;
+        }
+    }
+
+    // علامت‌گذاری کد ملی به عنوان استفاده شده
+    async markNationalIdAsUsed(nationalId) {
+        try {
+            const { error } = await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .update({ 
+                    is_used: true, 
+                    used_at: new Date().toISOString() 
+                })
+                .eq('national_id', nationalId);
+
+            if (error) {
+                console.warn('Warning updating national ID status:', error);
+            }
+        } catch (error) {
+            console.warn('Warning marking national ID as used:', error);
+        }
+    }
+
+    // آپلود لیست کدهای ملی مجاز
+    async uploadAllowedNationalIds(nationalIdsData) {
+        try {
+            // پاک کردن داده‌های قبلی
+            await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .delete()
+                .neq('id', 0);
+
+            // درج داده‌های جدید
+            const { data, error } = await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .insert(nationalIdsData);
+
+            if (error) {
+                throw error;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Error uploading allowed national IDs:', error);
+            throw error;
+        }
+    }
+
+    // دریافت لیست کدهای ملی مجاز
+    async getAllowedNationalIds() {
+        try {
+            const { data, error } = await supabase
+                .from(TABLES.ALLOWED_NATIONAL_IDS)
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                throw error;
+            }
+
+            return data || [];
+        } catch (error) {
+            console.error('Error fetching allowed national IDs:', error);
+            throw error;
         }
     }
 }

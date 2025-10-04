@@ -257,6 +257,12 @@ textarea {
     margin-bottom: 30px;
 }
 
+@media (min-width: 1024px) {
+    .stats-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
 .stat-card {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تست سیستم اعتبارسنجی کد ملی</title>
+    <style>
+        body {
+            font-family: 'Vazir', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            direction: rtl;
+        }
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #eee;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5a6fd8;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 200px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>تست سیستم اعتبارسنجی کد ملی</h1>
+        
+        <div class="test-section">
+            <h3>1. تست اتصال به Supabase</h3>
+            <button onclick="testSupabaseConnection()">تست اتصال</button>
+            <div id="connectionResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>2. تست اعتبارسنجی کد ملی</h3>
+            <input type="text" id="testNationalId" placeholder="کد ملی 10 رقمی" maxlength="10">
+            <button onclick="testNationalIdValidation()">تست اعتبارسنجی</button>
+            <div id="validationResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>3. تست ایجاد جداول</h3>
+            <button onclick="testCreateTables()">ایجاد جداول</button>
+            <div id="tablesResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>4. تست آپلود کد ملی نمونه</h3>
+            <button onclick="testUploadSampleNationalIds()">آپلود کدهای ملی نمونه</button>
+            <div id="uploadResult"></div>
+        </div>
+
+        <div class="test-section">
+            <h3>5. تست بررسی کد ملی مجاز</h3>
+            <input type="text" id="checkNationalId" placeholder="کد ملی برای بررسی" maxlength="10">
+            <button onclick="testCheckNationalId()">بررسی مجاز بودن</button>
+            <div id="checkResult"></div>
+        </div>
+
+        <div id="results"></div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/config.js"></script>
+    <script>
+        // Initialize Supabase
+        let supabase;
+        
+        function initSupabase() {
+            try {
+                supabase = window.supabase.createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey);
+                return true;
+            } catch (error) {
+                console.error('Error initializing Supabase:', error);
+                return false;
+            }
+        }
+
+        async function testSupabaseConnection() {
+            const resultDiv = document.getElementById('connectionResult');
+            
+            if (!initSupabase()) {
+                resultDiv.innerHTML = '<div class="error">خطا در مقداردهی اولیه Supabase</div>';
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('students')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">خطا در اتصال: ${error.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ اتصال به Supabase موفقیت‌آمیز است!</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">خطا: ${error.message}</div>`;
+            }
+        }
+
+        function isValidNationalId(nationalId) {
+            if (!/^[0-9]{10}$/.test(nationalId)) {
+                return false;
+            }
+
+            const check = parseInt(nationalId[9]);
+            let sum = 0;
+            
+            for (let i = 0; i < 9; i++) {
+                sum += parseInt(nationalId[i]) * (10 - i);
+            }
+            
+            const remainder = sum % 11;
+            
+            if (remainder < 2) {
+                return check === remainder;
+            } else {
+                return check === 11 - remainder;
+            }
+        }
+
+        function testNationalIdValidation() {
+            const nationalId = document.getElementById('testNationalId').value;
+            const resultDiv = document.getElementById('validationResult');
+            
+            if (!nationalId) {
+                resultDiv.innerHTML = '<div class="error">لطفاً کد ملی را وارد کنید</div>';
+                return;
+            }
+
+            const isValid = isValidNationalId(nationalId);
+            
+            if (isValid) {
+                resultDiv.innerHTML = `<div class="success">✅ کد ملی ${nationalId} معتبر است</div>`;
+            } else {
+                resultDiv.innerHTML = `<div class="error">❌ کد ملی ${nationalId} نامعتبر است</div>`;
+            }
+        }
+
+        async function testCreateTables() {
+            const resultDiv = document.getElementById('tablesResult');
+            
+            if (!supabase) {
+                initSupabase();
+            }
+
+            try {
+                // Check if allowed_national_ids table exists
+                const { data, error } = await supabase
+                    .from('allowed_national_ids')
+                    .select('count')
+                    .limit(1);
+
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">جدول allowed_national_ids وجود ندارد: ${error.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ جدول allowed_national_ids موجود است</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">خطا: ${error.message}</div>`;
+            }
+        }
+
+        async function testUploadSampleNationalIds() {
+            const resultDiv = document.getElementById('uploadResult');
+            
+            if (!supabase) {
+                initSupabase();
+            }
+
+            const sampleData = [
+                {
+                    national_id: '0123456789',
+                    student_name: 'علی احمدی',
+                    class_name: '۸۰۱',
+                    is_used: false
+                },
+                {
+                    national_id: '9876543210',
+                    student_name: 'فاطمه محمدی',
+                    class_name: '۸۰۲',
+                    is_used: false
+                },
+                {
+                    national_id: '1234567890',
+                    student_name: 'محمد رضایی',
+                    class_name: '۷۰۱',
+                    is_used: false
+                }
+            ];
+
+            try {
+                // First clear existing data
+                await supabase
+                    .from('allowed_national_ids')
+                    .delete()
+                    .neq('id', 0);
+
+                // Insert sample data
+                const { data, error } = await supabase
+                    .from('allowed_national_ids')
+                    .insert(sampleData);
+
+                if (error) {
+                    resultDiv.innerHTML = `<div class="error">خطا در آپلود: ${error.message}</div>`;
+                } else {
+                    resultDiv.innerHTML = '<div class="success">✅ کدهای ملی نمونه با موفقیت آپلود شدند</div>';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">خطا: ${error.message}</div>`;
+            }
+        }
+
+        async function testCheckNationalId() {
+            const nationalId = document.getElementById('checkNationalId').value;
+            const resultDiv = document.getElementById('checkResult');
+            
+            if (!nationalId) {
+                resultDiv.innerHTML = '<div class="error">لطفاً کد ملی را وارد کنید</div>';
+                return;
+            }
+
+            if (!supabase) {
+                initSupabase();
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('allowed_national_ids')
+                    .select('*')
+                    .eq('national_id', nationalId)
+                    .single();
+
+                if (error && error.code !== 'PGRST116') {
+                    resultDiv.innerHTML = `<div class="error">خطا: ${error.message}</div>`;
+                } else if (!data) {
+                    resultDiv.innerHTML = `<div class="error">❌ کد ملی ${nationalId} در لیست مجاز وجود ندارد</div>`;
+                } else {
+                    const status = data.is_used ? 'استفاده شده' : 'استفاده نشده';
+                    resultDiv.innerHTML = `<div class="success">✅ کد ملی ${nationalId} مجاز است<br>نام: ${data.student_name || 'مشخص نشده'}<br>کلاس: ${data.class_name || 'مشخص نشده'}<br>وضعیت: ${status}</div>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="error">خطا: ${error.message}</div>`;
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', function() {
+            initSupabase();
+        });
+    </script>
+</body>
+</html>

@@ -5,6 +5,7 @@
 -- حذف جداول در صورت وجود (برای راه‌اندازی مجدد)
 DROP TABLE IF EXISTS expected_students;
 DROP TABLE IF EXISTS students;
+DROP TABLE IF EXISTS allowed_national_ids;
 
 -- جدول دانش‌آموزان ثبت شده
 CREATE TABLE students (
@@ -35,16 +36,30 @@ CREATE TABLE expected_students (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- جدول کدهای ملی مجاز
+CREATE TABLE allowed_national_ids (
+    id SERIAL PRIMARY KEY,
+    national_id VARCHAR(10) UNIQUE NOT NULL,
+    student_name VARCHAR(200),
+    class_name VARCHAR(10),
+    is_used BOOLEAN DEFAULT FALSE,
+    used_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ایجاد ایندکس برای بهبود عملکرد
 CREATE INDEX idx_students_national_id ON students(national_id);
 CREATE INDEX idx_students_class_name ON students(class_name);
 CREATE INDEX idx_students_created_at ON students(created_at);
 CREATE INDEX idx_expected_students_class_name ON expected_students(class_name);
 CREATE INDEX idx_expected_students_is_registered ON expected_students(is_registered);
+CREATE INDEX idx_allowed_national_ids_national_id ON allowed_national_ids(national_id);
+CREATE INDEX idx_allowed_national_ids_is_used ON allowed_national_ids(is_used);
 
 -- تنظیم Row Level Security (RLS) - فعال‌سازی امنیت سطر
 ALTER TABLE students ENABLE ROW LEVEL SECURITY;
 ALTER TABLE expected_students ENABLE ROW LEVEL SECURITY;
+ALTER TABLE allowed_national_ids ENABLE ROW LEVEL SECURITY;
 
 -- ایجاد سیاست‌های دسترسی (Policies)
 -- همه کاربران می‌توانند داده‌ها را بخوانند و اضافه کنند
@@ -57,6 +72,11 @@ CREATE POLICY "Enable read access for all users" ON expected_students FOR SELECT
 CREATE POLICY "Enable insert access for all users" ON expected_students FOR INSERT WITH CHECK (true);
 CREATE POLICY "Enable update access for all users" ON expected_students FOR UPDATE USING (true);
 CREATE POLICY "Enable delete access for all users" ON expected_students FOR DELETE USING (true);
+
+CREATE POLICY "Enable read access for all users" ON allowed_national_ids FOR SELECT USING (true);
+CREATE POLICY "Enable insert access for all users" ON allowed_national_ids FOR INSERT WITH CHECK (true);
+CREATE POLICY "Enable update access for all users" ON allowed_national_ids FOR UPDATE USING (true);
+CREATE POLICY "Enable delete access for all users" ON allowed_national_ids FOR DELETE USING (true);
 
 -- اضافه کردن trigger برای به‌روزرسانی خودکار updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -82,5 +102,5 @@ CREATE TRIGGER update_students_updated_at
 SELECT 'جداول با موفقیت ایجاد شدند!' as message;
 SELECT table_name, column_name, data_type 
 FROM information_schema.columns 
-WHERE table_name IN ('students', 'expected_students') 
+WHERE table_name IN ('students', 'expected_students', 'allowed_national_ids') 
 ORDER BY table_name, ordinal_position;
